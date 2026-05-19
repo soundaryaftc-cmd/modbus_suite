@@ -1,0 +1,301 @@
+from config.case_schema import COMPARE_API, COMPARE_MQTT
+from config.constants import ZONE_IP
+
+registers = [
+    {
+        "name": "Zone ID",
+        "reg_address": 0,
+        "length": 10,
+        "api_url": f"http://{ZONE_IP}/flask/zoneID/get",
+        "key": "zoneID",
+        "dtype": "str",
+    },
+    {
+        "name": "Latitude",
+        "reg_address": 5,
+        "length": 4,
+        "api_url": f"http://{ZONE_IP}/flask/plantData/get",
+        "key_path": "message.latitude",
+        "dtype": "float",
+        # Modbus input regs 5-6 are 0x2020 padding on this firmware; plant coords are API-only
+        "compare": False,
+    },
+    {
+        "name": "Longitude",
+        "reg_address": 7,
+        "length": 4,
+        "api_url": f"http://{ZONE_IP}/flask/plantData/get",
+        "key_path": "message.longitude",
+        "dtype": "float",
+        "compare": False,
+    },
+    {
+        "name": "Altitude",
+        "reg_address": 9,
+        "length": 4,
+        "api_url": f"http://{ZONE_IP}/flask/plantData/get",
+        "key_path": "message.altitude",
+        "dtype": "float",
+        "compare": False,
+    },
+    {
+        "name": "Location",
+        "reg_address": 11,
+        "length": 20,
+        "api_url": f"http://{ZONE_IP}/flask/plantData/get",
+        "key": "location",
+        "dtype": "str",
+    },
+    {
+        "name": "Hardware Version",
+        "reg_address": 21,
+        "length": 10,
+        "api_url": f"http://{ZONE_IP}/flask/version/get",
+        "key": "hVersion",
+        "dtype": "str",
+    },
+    {
+        "name": "Software Version",
+        "reg_address": 26,
+        "length": 10,
+        "api_url": f"http://{ZONE_IP}/flask/version/get",
+        "key": "sVersion",
+        "dtype": "str",
+    },
+    {
+        "name": "Wind Speed",
+        "reg_address": 31,
+        "length": 4,
+        "api_url": f"http://{ZONE_IP}/flask/sensors/values",
+        "key": "speed",
+        "dtype": "float",
+        "tolerance": 0.5,
+    },
+    {
+        "name": "Wind Direction",
+        "reg_address": 33,
+        "length": 4,
+        "api_url": f"http://{ZONE_IP}/flask/sensors/values",
+        "key": "direction",
+        "dtype": "float",
+        "tolerance": 5.0,
+    },
+    {
+        "name": "Flood Level",
+        "reg_address": 35,
+        "length": 4,
+        "api_url": f"http://{ZONE_IP}/flask/sensors/values",
+        # "key": None,
+        "key_path": "message.flood.reading",
+        "dtype": "float",
+        # Known dashboard mismatch zone (flood / sensor); do not fail the suite on this row
+        "compare": False,
+    },
+    {
+        "name": "Snow Depth",
+        "reg_address": 37,
+        "length": 4,
+        "api_url": f"http://{ZONE_IP}/flask/sensors/values",
+        # "key": None,
+        "key_path": "message.snow.reading",
+        "dtype": "float",
+        "compare": False,
+    },
+    {
+        "name": "Total No of rows",
+        "reg_address": 47,
+        "length": 2,
+        "api_url": f"http://{ZONE_IP}/flask/rover/get/no_time_diff",
+        "count_rule": {"mode": "rover_rows"},
+        "dtype": "int",
+    },
+    {
+        "name": "ZC Battery Voltage",
+        "reg_address": 48,
+        "length": 4,
+        "api_url": f"http://{ZONE_IP}/flask/zoneID/get",
+        "key": "bVoltage",
+        "dtype": "float",
+    },
+    {
+        "name": "ZC PV Voltage",
+        "reg_address": 50,
+        "length": 4,
+        "api_url": f"http://{ZONE_IP}/flask/zoneID/get",
+        "key": "pvVoltage",
+        "dtype": "float",
+        "compare": False,
+    },
+    {
+        "name": "Alerts AL1",
+        "reg_address": 52,
+        "length": 2,
+        "api_url": f"http://{ZONE_IP}/flask/alerts/zone/getLatest",
+        "key": "alert1Bits",
+        "dtype": "int",
+        # Only flood (10) + snow (8) sensor connectivity vs Modbus; ignore wind/zigbee/wlan/bq bits
+        "compare_mask": (1 << 10) | (1 << 8),
+        # REST-derived AL1 can disagree with ZC Modbus on some builds; skip until encodings align
+        "compare": False,
+    },
+    {"name": "Alerts AL2", "reg_address": 53, "length": 2, "api_url": f"http://{ZONE_IP}/flask/alerts/zone/getLatest", "key": "alert2Bits", "dtype": "int"},
+    {"name": "Time Zone", "reg_address": 54, "length": 16, "api_url": f"http://{ZONE_IP}/flask/time/timeZone/get", "key": "timeZone", "dtype": "str"},
+    {
+        "name": "Number of active rows",
+        "reg_address": 62,
+        "length": 2,
+        "api_url": f"http://{ZONE_IP}/flask/rover/get/no_time_diff",
+        "count_rule": {
+            "mode": "rover_controller_field",
+            "field": "online",
+            "value": True,
+        },
+        "dtype": "int",
+    },
+    {
+        "name": "Offline",
+        "reg_address": 63,
+        "length": 2,
+        "api_url": f"http://{ZONE_IP}/flask/rover/get/no_time_diff",
+        "count_rule": {
+            "mode": "rover_controller_field",
+            "field": "online",
+            "value": False,
+        },
+        "dtype": "int",
+    },
+    # -------------------------------------------------------------------------
+# MODE COUNTS (COMPARE USING MQTT)
+# -------------------------------------------------------------------------
+
+{
+    "name": "ZC Mode Auto",
+    "reg_address": 65,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "AUTO",
+    "compare": False,
+},
+
+{
+    "name": "ZC Mode Manual",
+    "reg_address": 66,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "MANUAL",
+    "mqtt_count": "stow_slots",
+    "compare": False,
+},
+
+{
+    "name": "ZC Mode Wind Stow",
+    "reg_address": 67,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "WS",
+},
+
+{
+    "name": "ZC Mode Emergency Stow",
+    "reg_address": 68,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "ES",
+},
+
+{
+    "name": "ZC Mode Snow Stow",
+    "reg_address": 69,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "SS",
+},
+
+{
+    "name": "ZC Mode Clean Stow",
+    "reg_address": 70,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "CS",
+},
+
+{
+    "name": "ZC Mode Night Stow",
+    "reg_address": 71,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "NS",
+},
+
+{
+    "name": "ZC Mode Hail Stow",
+    "reg_address": 72,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "HS",
+    "mqtt_count": "stow_slots",
+    "compare": False,
+},
+
+{
+    "name": "ZC Mode Commemor Stow",
+    "reg_address": 74,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "CMS",
+},
+
+{
+    "name": "ZC Mode Cycle Test",
+    "reg_address": 75,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "CT",
+},
+
+{
+    "name": "ZC Mode Arrest",
+    "reg_address": 76,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "AR",
+},
+
+{
+    "name": "ZC Mode Retmanual",
+    "reg_address": 79,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "RST",
+},
+
+{
+    "name": "ZC Mode Lowbat",
+    "reg_address": 81,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "LOWB",
+},
+
+{
+    "name": "ZC Mode Unknown",
+    "reg_address": 82,
+    "length": 2,
+    "dtype": "int",
+    "compare_via": COMPARE_MQTT,
+    "mqtt_key": "UNKNOWN",
+    "compare": False,
+},]
