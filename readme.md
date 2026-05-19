@@ -1,12 +1,12 @@
 ssh torizon@192.168.95.133 #Connect to device
 
-ssh-keygen -R 192.168.95.133  ## ⚠️ Fix SSH "Host Key Changed" Error
+ssh-keygen -R 192.168.95.133  ##  Fix SSH "Host Key Changed" Error
 
-ping 192.168.95.133  ## 📡 Network Checks
+ping 192.168.95.133  ##  Network Checks
 Test-NetConnection 192.168.95.133 -Port 22
 
 
-cat filename ## 📄 Open Files (Read Only)
+cat filename ## Open Files (Read Only)
 
 tail -f filename  # Live file updates
 
